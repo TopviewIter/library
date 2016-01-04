@@ -33,7 +33,7 @@ import java.awt.SystemColor;
 public class IndexFrame extends JFrame {
 
 	private static final long serialVersionUID = 1L;
-	private JPanel contentPane;
+	private JLabel contentPane;
 	private JPanel tablePanel;
 	private JPanel bookTypePanel;
 	private JPanel bookDetailPanel;
@@ -44,8 +44,8 @@ public class IndexFrame extends JFrame {
 	public IndexFrame(User user) {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 738, 452);
-		contentPane = new JPanel();
-//		 contentPane.setIcon(ImageUtil.loadImageIcon(Constant.LIBRARY));
+		contentPane = new JLabel();
+		 contentPane.setIcon(ImageUtil.loadImageIcon(Constant.LIBRARY));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 
