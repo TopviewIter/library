@@ -7,13 +7,13 @@
 >`panel.setOpaque(false);`
 
 #效果图
-`登录界面:`
+##`登录界面:`
 ![login](/effect/login.png)
-`登录失败界面:`
+##`登录失败界面:`
 ![login](/effect/404.png)
-`主页界面:`
+##`主页界面:`
 ![login](/effect/index.png)
-`查看新书界面:`
+##`查看新书界面:`
 ![login](/effect/newbook.png)
-`查看其它类型书界面:`
+##`查看其它类型书界面:`
 ![login](/effect/otherbook.png)
