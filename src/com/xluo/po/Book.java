@@ -11,6 +11,7 @@ public class Book {
 	private String publishTime;
 	private String type;
 	private String img;
+	private String simpleInfo;
 	private List<User> renter;
 	
 	public String getId() {
@@ -75,6 +76,14 @@ public class Book {
 	
 	public void setRenter(List<User> renter) {
 		this.renter = renter;
+	}
+
+	public String getSimpleInfo() {
+		return simpleInfo;
+	}
+
+	public void setSimpleInfo(String simpleInfo) {
+		this.simpleInfo = simpleInfo;
 	}
 	
 }

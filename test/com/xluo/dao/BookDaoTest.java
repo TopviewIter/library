@@ -34,5 +34,18 @@ public class BookDaoTest {
 			e.printStackTrace();
 		}
 	}
+	
+	@Test
+	public void testSelectListOrder(){
+		try {
+			List<Book> books = bookDao.selectListOrder(new String[] { "type" }, new Object[] {"database"},
+					new String[] { "img", "bookname", "publishTime" }, new String[]{"publishTime"}, true);
+			for(Book book : books){
+				System.out.println(book.getPublishTime());
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 
 }

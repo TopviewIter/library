@@ -27,13 +27,29 @@ public class SQLUtil {
 			sb.append(resultName + ",");
 		}
 		sb = new StringBuilder(sb.substring(0, sb.toString().lastIndexOf(",")));
-		sb.append(" from " + tableName + " where ");
-		for(String paramName : paramNames){
-			sb.append(paramName + " = ? and ");
+		sb.append(" from " + tableName);
+		if(paramNames != null){
+			sb.append(" where ");
+			for(String paramName : paramNames){
+				sb.append(paramName + " = ? and ");
+			}
+			sb = new StringBuilder(sb.substring(0, sb.toString().lastIndexOf("and")));
 		}
-		sb = new StringBuilder(sb.substring(0, sb.toString().lastIndexOf("and")));
 		return sb.toString();
 		
+	}
+
+	public static String getSelectSqlOrder(String tableName, String[] paramNames, String[] resultNames,
+			String[] orderByParam, boolean isDesc) {
+		StringBuilder sb = new StringBuilder(getSelectSql(tableName, paramNames, resultNames));
+		sb.append(" order by ");
+		for(String obp : orderByParam){
+			sb.append(obp);
+		}
+		if(isDesc){
+			sb.append(" desc");
+		}
+		return sb.toString();
 	}
 
 }

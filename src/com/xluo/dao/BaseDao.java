@@ -26,18 +26,31 @@ public class BaseDao<T> {
 	
 	@SuppressWarnings("unchecked")
 	public List<T> selectList(String[] paramName, Object[] paramValue, String[] resultName) throws SQLException {
-		return (List<T>) select(paramName, paramValue, resultName, false);
+		String sql = SQLUtil.getSelectSql(getTableName(), paramName, resultName);
+		return (List<T>) select(sql, paramName, paramValue, resultName, false);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<T> selectListOrder(String[] paramName, Object[] paramValue, String[] resultName, String[] orderByParam, boolean isDesc) throws SQLException {
+		String sql = SQLUtil.getSelectSqlOrder(getTableName(), paramName, resultName, orderByParam, isDesc);
+		return (List<T>) select(sql, paramName, paramValue, resultName, false);
 	}
 	
 	@SuppressWarnings("unchecked")
 	public T selectOne(String[] paramName, Object[] paramValue, String[] resultName) throws SQLException {
-		return (T) select(paramName, paramValue, resultName, true);
+		String sql = SQLUtil.getSelectSql(getTableName(), paramName, resultName);
+		return (T) select(sql, paramName, paramValue, resultName, true);
 	}
 	
-	private Object select(String[] paramName, Object[] paramValue, String[] resultName, boolean isOne) throws SQLException{
+	@SuppressWarnings("unchecked")
+	public T selectOneOrder(String[] paramName, Object[] paramValue, String[] resultName, String[] orderByParam, boolean isDesc) throws SQLException {
+		String sql = SQLUtil.getSelectSqlOrder(getTableName(), paramName, resultName, orderByParam, isDesc);
+		return (T) select(sql, paramName, paramValue, resultName, true);
+	}
+	
+	private Object select(String sql, String[] paramName, Object[] paramValue, String[] resultName, boolean isOne) throws SQLException{
 		Connection conn = DBUtil.getCon();
 		QueryRunner qr = new QueryRunner();
-		String sql = SQLUtil.getSelectSql(getTableName(), paramName, resultName);
 		System.out.println(sql);
 		Object result = null;
 		if(isOne){
