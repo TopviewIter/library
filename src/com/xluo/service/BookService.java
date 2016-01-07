@@ -4,11 +4,24 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.Vector;
 
 import com.xluo.po.Book;
 
 public class BookService {
 
+	public Vector<String> changeTypeInVector(List<Book> books){
+		Set<String> bookType = new TreeSet<String>();
+		Vector<String> result = new Vector<String>();
+		for(Book book : books){
+			bookType.add(book.getType());
+		}
+		result.addAll(bookType);
+		return result;
+	}
+	
 	public Object[][] changeToArray(List<Book> books, String[] attributes){
 		
 		Object[][] result = new Object[books.size()][attributes.length];

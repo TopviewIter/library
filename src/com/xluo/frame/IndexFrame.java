@@ -7,11 +7,12 @@ import java.awt.Font;
 import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
-import javax.swing.AbstractListModel;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -30,6 +31,7 @@ import com.xluo.frame.panel.AllUserPanel;
 import com.xluo.frame.panel.AuthorPanel;
 import com.xluo.frame.panel.RentBookPanel;
 import com.xluo.frame.panel.UserInfoPanel;
+import com.xluo.frame.render.ListCellRender;
 import com.xluo.po.Book;
 import com.xluo.po.Permission;
 import com.xluo.po.User;
@@ -64,7 +66,7 @@ public class IndexFrame extends JFrame {
 		setBounds(100, 100, 738, 452);
 		setIconImage(ImageUtil.loadImage(Constant.LOGO));
 		contentPane = new JPanel();
-//		contentPane.setIcon(ImageUtil.loadImageIcon(Constant.LIBRARY));
+		// contentPane.setIcon(ImageUtil.loadImageIcon(Constant.LIBRARY));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 
@@ -81,14 +83,14 @@ public class IndexFrame extends JFrame {
 		tablePanel.setOpaque(false);
 
 		bookTypePanel = new JPanel();
-		bookTypePanel.setBounds(0, 21, 163, 364);
+		bookTypePanel.setBounds(0, 21, 163, 369);
 		contentPane.add(bookTypePanel);
 		bookTypePanel.setOpaque(false);
 		bookTypePanel.setLayout(new BorderLayout(0, 0));
 
 		bookDetailScrollPane = new JScrollPane();
 		bookDetailScrollPane.setVisible(false);
-		bookDetailScrollPane.setBounds(168, 21, 560, 364);
+		bookDetailScrollPane.setBounds(168, 21, 560, 369);
 		contentPane.add(bookDetailScrollPane);
 
 		JPanel footPanel = new JPanel();
@@ -158,17 +160,14 @@ public class IndexFrame extends JFrame {
 
 		@Override
 		public void valueChanged(ListSelectionEvent e) {
-			if ("computer".equals(((JList<?>) e.getSource()).getSelectedValue())) {
-				createBookDetailBox(getBookData("computer"));
-			} else if ("database".equals(((JList<?>) e.getSource()).getSelectedValue())) {
-				createBookDetailBox(getBookData("database"));
-			}
+			String label = ((JList<?>) e.getSource()).getSelectedValue().toString();
+			createBookDetailBox(getBookData(label));
 		}
 
 		private List<Book> getBookData(String type) {
 			try {
 				return bookDao.selectList(new String[] { "type" }, new Object[] { type },
-						new String[] { "img", "bookname" });
+						new String[] { "img", "bookname", "id" });
 			} catch (SQLException e1) {
 				e1.printStackTrace();
 				return null;
@@ -177,18 +176,19 @@ public class IndexFrame extends JFrame {
 
 	}
 
-	private void createBookDetailBox(List<Book> book) {
+	private void createBookDetailBox(List<Book> books) {
 		bookDetailScrollPane.setVisible(true);
 		bookDetailPanel = new JPanel();
 		bookDetailPanel.setLayout(null);
-		bookDetailPanel.setPreferredSize(new Dimension(552, (book.size() / 3 + 1) * 177));
+		bookDetailPanel.setPreferredSize(new Dimension(552, (books.size() / 3 + 1) * 177));
 		bookDetailPanel.removeAll();
-		for (int i = 0, j = -1; i < book.size(); i++) {
+		for (int i = 0, j = -1; i < books.size(); i++) {
 			JPanel bookBoxPanel = new JPanel();
 			if (i % 3 == 0)
 				j++;
 			bookBoxPanel.setBounds((i % 3) * 183, j * 177, 183, 177);
 			bookDetailPanel.add(bookBoxPanel);
+			bookBoxPanel.addMouseListener(new BookBoxListener());
 			bookBoxPanel.setLayout(null);
 
 			JLabel lblBookImage = new JLabel("bookImage");
@@ -196,13 +196,35 @@ public class IndexFrame extends JFrame {
 			lblBookImage.setIcon(ImageUtil.loadImageIcon(Constant.LIBRARY));
 			bookBoxPanel.add(lblBookImage);
 
-			JLabel lblBookName = new JLabel("bookname");
+			JLabel lblBookName = new JLabel(books.get(i).getBookname());
 			lblBookName.setBounds(49, 145, 90, 15);
 			bookBoxPanel.add(lblBookName);
+
+			JLabel lblBookId = new JLabel(books.get(i).getId());
+			lblBookId.setBounds(49, 145, 90, 15);
+			lblBookId.setVisible(false);
+			bookBoxPanel.add(lblBookId);
 		}
 		bookDetailScrollPane.setViewportView(bookDetailPanel);
-		bookDetailPanel.setBounds(0, 0, 552, (book.size() / 3 + 1) * 177);
+		bookDetailPanel.setBounds(0, 0, 552, (books.size() / 3 + 1) * 177);
 		contentPane.add(bookDetailScrollPane);
+	}
+
+	private class BookBoxListener extends MouseAdapter {
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			JPanel bookBox = (JPanel) e.getSource();
+			JLabel bookIdLabel = (JLabel) bookBox.getComponent(2);
+			try {
+				Book book = bookDao.selectOne(new String[] { "id" }, new String[] { bookIdLabel.getText() }, null);
+				new BookDetailFrame(book).setVisible(true);
+				bookDao.insertUserScanBook(user.getId(), book.getId());
+			} catch (SQLException e1) {
+				e1.printStackTrace();
+			}
+		}
+
 	}
 
 	private class IndexFrameItemListener implements ActionListener {
@@ -307,7 +329,7 @@ public class IndexFrame extends JFrame {
 			userInfoPanel.add(new UserInfoPanel(), BorderLayout.CENTER);
 		}
 
-		private void createBookTypeList() {
+		private void createBookTypeList() throws SQLException {
 			bookTypePanel.removeAll();
 			bookTypePanel.setVisible(true);
 			rentPanel.setVisible(false);
@@ -319,21 +341,13 @@ public class IndexFrame extends JFrame {
 			bookTypePanel.setBackground(Color.WHITE);
 			bookTypePanel.setOpaque(true);
 			JList<String> bookTypeList = new JList<String>();
+			bookTypeList.setCellRenderer(new ListCellRender());
 			bookTypeList.addListSelectionListener(new IndexFrameListListener());
 			bookTypeList.setFont(new Font("宋体", Font.PLAIN, 14));
-			bookTypeList.setModel(new AbstractListModel<String>() {
-				private static final long serialVersionUID = 1L;
-				String[] values = new String[] { "computer", "database" };
-
-				public int getSize() {
-					return values.length;
-				}
-
-				public String getElementAt(int index) {
-					return values[index];
-				}
-			});
-			bookTypeList.setBounds(0, 0, 163, 364);
+			List<Book> books = bookDao.selectListOrder(null, null, new String[] { "type" }, new String[] { "type" },
+					false);
+			bookTypeList.setListData(bookService.changeTypeInVector(books));
+			bookTypeList.setBounds(5, 0, 163, 364);
 			bookTypePanel.add(bookTypeList, BorderLayout.CENTER);
 			contentPane.add(bookTypePanel);
 		}
@@ -362,9 +376,9 @@ public class IndexFrame extends JFrame {
 
 		private void CreateNewBookTable(List<Book> books) throws SQLException {
 			tablePanel.setVisible(true);
+			tablePanel.removeAll();
 			allUserPanel.setVisible(false);
 			rentPanel.setVisible(false);
-			tablePanel.removeAll();
 			authorPanel.setVisible(false);
 			userInfoPanel.setVisible(false);
 			bookDetailScrollPane.setVisible(false);

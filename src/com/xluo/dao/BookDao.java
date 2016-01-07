@@ -27,6 +27,10 @@ public class BookDao extends BaseDao<Book> {
 	
 	public boolean updateUserBook(String userId, String bookId) throws SQLException {
 		String sql = "update user_book set type = 3 where userId = ? and bookId = ?";
+		return upeate(sql, userId, bookId);
+	}
+	
+	private boolean upeate(String sql, String userId, String bookId) throws SQLException{
 		Connection conn = DBUtil.getCon();
 		QueryRunner qr = new QueryRunner();
 		int result = qr.update(conn, sql, new Object[] {userId, bookId});
@@ -34,11 +38,19 @@ public class BookDao extends BaseDao<Book> {
 		return result >= 1 ? true : false;
 	}
 	
+	public boolean insertUserScanBook(String userId, String bookId) throws SQLException{
+		return insert(userId, bookId, 1);
+	}
+	
 	public boolean insertUserBook(String userId, String bookId) throws SQLException {
+		return insert(userId, bookId, 2);
+	}
+	
+	private boolean insert(String userId, String bookId, int type) throws SQLException{
 		String sql = "insert into user_book(id, userId, bookId, type) values(?, ?, ?, ?)";
 		Connection conn = DBUtil.getCon();
 		QueryRunner qr = new QueryRunner();
-		int result = qr.update(conn, sql, new Object[] { UUIDUtil.getUUID(), userId, bookId, 2 });
+		int result = qr.update(conn, sql, new Object[] { UUIDUtil.getUUID(), userId, bookId, type });
 		DbUtils.closeQuietly(conn);
 		return result == 1 ? true : false;
 	}
