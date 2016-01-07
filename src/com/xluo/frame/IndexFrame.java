@@ -23,12 +23,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.MenuEvent;
 
-import com.xluo.adapter.MenuListenerAdapter;
 import com.xluo.dao.BookDao;
+import com.xluo.dao.PermissionDao;
+import com.xluo.frame.panel.AllUserPanel;
 import com.xluo.frame.panel.AuthorPanel;
+import com.xluo.frame.panel.RentBookPanel;
+import com.xluo.frame.panel.UserInfoPanel;
 import com.xluo.po.Book;
+import com.xluo.po.Permission;
 import com.xluo.po.User;
 import com.xluo.service.BookService;
 import com.xluo.util.Constant;
@@ -43,13 +46,23 @@ public class IndexFrame extends JFrame {
 	private JPanel bookDetailPanel;
 	private JScrollPane bookDetailScrollPane;
 	private JPanel authorPanel;
+	private JPanel userInfoPanel;
+	private JPanel allUserPanel;
+	private JPanel rentPanel;
+
+	private RentBookPanel rentOrReturnBookPanel;
 
 	private BookDao bookDao = new BookDao();
 	private BookService bookService = new BookService();
 
-	public IndexFrame(User user) {
+	private PermissionDao permissionDao = new PermissionDao();
+	private User user;
+
+	public IndexFrame(User user) throws SQLException {
+		this.user = user;
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 738, 452);
+		setIconImage(ImageUtil.loadImage(Constant.LOGO));
 		contentPane = new JPanel();
 //		contentPane.setIcon(ImageUtil.loadImageIcon(Constant.LIBRARY));
 		setContentPane(contentPane);
@@ -58,61 +71,7 @@ public class IndexFrame extends JFrame {
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.setBounds(0, 0, 731, 21);
 		contentPane.add(menuBar);
-
-		JMenu mnLibrary = new JMenu("library");
-		mnLibrary.setIcon(ImageUtil.loadImageIcon(Constant.ICON_LIBRARY));
-		mnLibrary.addSeparator();
-		menuBar.add(mnLibrary);
-
-		JMenuItem mntmNew = new JMenuItem("newest book");
-		mntmNew.addActionListener(new IndexFrameItemListener());
-		mnLibrary.add(mntmNew);
-
-		JMenuItem mntmHot = new JMenuItem("hot book");
-		mntmHot.addActionListener(new IndexFrameItemListener());
-		mnLibrary.add(mntmHot);
-
-		JMenuItem mntmOther = new JMenuItem("other...");
-		mntmOther.addActionListener(new IndexFrameItemListener());
-		mnLibrary.add(mntmOther);
-
-		JMenu mnInfo = new JMenu("myInfo");
-		mnInfo.setIcon(ImageUtil.loadImageIcon(Constant.ICON_ME));
-		mnInfo.addSeparator();
-		menuBar.add(mnInfo);
-
-		JMenuItem mntmScaned = new JMenuItem("scaned");
-		mnInfo.add(mntmScaned);
-
-		JMenuItem mntmRented = new JMenuItem("rented");
-		mnInfo.add(mntmRented);
-
-		JMenu mnSetting = new JMenu("setting");
-		mnSetting.setIcon(ImageUtil.loadImageIcon(Constant.SETTING));
-		mnSetting.addMenuListener(new IndexFrameJItemListener());
-		mnSetting.addSeparator();
-		menuBar.add(mnSetting);
-
-		JMenuItem mntmSwapUser = new JMenuItem("swap user");
-		mntmSwapUser.addActionListener(new IndexFrameItemListener());
-		mnSetting.add(mntmSwapUser);
-
-		JMenuItem mntmExit = new JMenuItem("exit");
-		mntmExit.addActionListener(new IndexFrameItemListener());
-		mnSetting.add(mntmExit);
-
-		JMenu mnAbout = new JMenu("about");
-		mnAbout.setIcon(ImageUtil.loadImageIcon(Constant.ABOUT));
-		mnAbout.addMenuListener(new IndexFrameJItemListener());
-		mnAbout.addSeparator();
-		menuBar.add(mnAbout);
-
-		JMenuItem mntmAuthor = new JMenuItem("author");
-		mntmAuthor.addActionListener(new IndexFrameItemListener());
-		mnAbout.add(mntmAuthor);
-
-		JMenuItem mntmVersion = new JMenuItem("version");
-		mnAbout.add(mntmVersion);
+		createMenu(user, menuBar);
 
 		tablePanel = new JPanel();
 		tablePanel.setBounds(10, 25, 710, 360);
@@ -122,14 +81,14 @@ public class IndexFrame extends JFrame {
 		tablePanel.setOpaque(false);
 
 		bookTypePanel = new JPanel();
-		bookTypePanel.setBounds(0, 21, 151, 364);
+		bookTypePanel.setBounds(0, 21, 163, 364);
 		contentPane.add(bookTypePanel);
 		bookTypePanel.setOpaque(false);
 		bookTypePanel.setLayout(new BorderLayout(0, 0));
 
 		bookDetailScrollPane = new JScrollPane();
 		bookDetailScrollPane.setVisible(false);
-		bookDetailScrollPane.setBounds(168, 21, 552, 364);
+		bookDetailScrollPane.setBounds(168, 21, 560, 364);
 		contentPane.add(bookDetailScrollPane);
 
 		JPanel footPanel = new JPanel();
@@ -144,24 +103,55 @@ public class IndexFrame extends JFrame {
 		footPanel.add(lblWelcome);
 		lblWelcome.setFont(new Font("宋体", Font.PLAIN, 14));
 		lblWelcome.setForeground(Color.RED);
-		
+
 		authorPanel = new JPanel();
 		authorPanel.setBounds(0, 21, 731, 364);
 		authorPanel.setVisible(false);
 		contentPane.add(authorPanel);
 		authorPanel.setLayout(new BorderLayout());
 
+		allUserPanel = new JPanel();
+		allUserPanel.setBounds(0, 21, 731, 364);
+		allUserPanel.setVisible(false);
+		contentPane.add(allUserPanel);
+		allUserPanel.setLayout(new BorderLayout());
+
+		userInfoPanel = new JPanel();
+		userInfoPanel.setBounds(0, 21, 731, 369);
+		userInfoPanel.setVisible(false);
+		contentPane.add(userInfoPanel);
+		userInfoPanel.setLayout(new BorderLayout());
+
+		rentPanel = new JPanel();
+		rentPanel.setBounds(0, 21, 731, 369);
+		rentPanel.setVisible(false);
+		contentPane.add(rentPanel);
+		rentPanel.setLayout(new BorderLayout());
+
 		setResizable(false);
 
 	}
 
-	private class IndexFrameJItemListener extends MenuListenerAdapter {
+	private void createMenu(User user, JMenuBar menuBar) throws SQLException {
+		List<Permission> permissions = permissionDao.getLoginPermission(user);
+		if (permissions != null) {
+			for (Permission permission : permissions) {
+				JMenu mn = new JMenu(permission.getPermissionName());
+				mn.setIcon(ImageUtil.loadImageIcon(permission.getIcon()));
+				mn.addSeparator();
+				menuBar.add(mn);
 
-		@Override
-		public void menuSelected(MenuEvent e) {
-			bookDetailScrollPane.setVisible(false);
+				List<Permission> childPermissions = permissionDao.getChildPermission(permission.getId());
+				if (childPermissions != null) {
+					for (Permission cp : childPermissions) {
+						JMenuItem mntm = new JMenuItem(cp.getPermissionName());
+						mntm.addActionListener(new IndexFrameItemListener());
+						mntm.setIcon(ImageUtil.loadImageIcon(cp.getIcon()));
+						mn.add(mntm);
+					}
+				}
+			}
 		}
-
 	}
 
 	private class IndexFrameListListener implements ListSelectionListener {
@@ -216,37 +206,113 @@ public class IndexFrame extends JFrame {
 	}
 
 	private class IndexFrameItemListener implements ActionListener {
-		
+
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			String label = e.getActionCommand();
-			if ("newest book".equals(label)) {
-				try {
-					CreateNewBookTable();
-				} catch (SQLException e1) {
-					e1.printStackTrace();
+			try {
+				String label = e.getActionCommand();
+				if ("newest book".equals(label)) {
+					String[] Names = { "bookname", "simpleInfo", "author", "account" };
+					List<Book> books = bookDao.selectListOrder(null, null, Names, new String[] { "publishTime" }, true);
+					CreateNewBookTable(books);
+				} else if ("hot book".equals(label)) {
+					createHotBookTable();
+				} else if ("other...".equals(label)) {
+					createBookTypeList();
+				} else if ("author".equals(label)) {
+					createAuthorPanel();
+				} else if ("swap user".equals(label)) {
+					new LoginFrame().setVisible(true);
+					dispose();
+				} else if ("exit".equals(label)) {
+					System.exit(NORMAL);
+				} else if ("scaned".equals(label)) {
+					List<Book> books = bookDao.selectScanBook(user);
+					CreateNewBookTable(books);
+				} else if ("rented".equals(label)) {
+					List<Book> books = bookDao.selectRentBook(user);
+					CreateNewBookTable(books);
+				} else if ("update-info".equals(label)) {
+					createUserInfoPanel();
+				} else if ("all user".equals(label)) {
+					createAllUserPanel();
+				} else if ("insert-rent".equals(label)) {
+					if (rentOrReturnBookPanel == null) {
+						createRentOrReturnPanel("rent", new String[] { "cancel", "rent" });
+					} else {
+						rentPanel.setVisible(true);
+						rentPanel.setOpaque(false);
+						authorPanel.setVisible(false);
+						allUserPanel.setVisible(false);
+						bookDetailScrollPane.setVisible(false);
+						bookTypePanel.setVisible(false);
+						tablePanel.setVisible(false);
+						userInfoPanel.setVisible(false);
+						rentOrReturnBookPanel.getLblRent().setText("rent");
+						rentOrReturnBookPanel.getBtnSubmit().setText("rent");
+					}
+				} else if ("insert-return".equals(label)) {
+					if (rentOrReturnBookPanel == null) {
+						createRentOrReturnPanel("return", new String[] { "cancel", "return" });
+					} else {
+						rentPanel.setVisible(true);
+						rentPanel.setOpaque(false);
+						authorPanel.setVisible(false);
+						allUserPanel.setVisible(false);
+						bookDetailScrollPane.setVisible(false);
+						bookTypePanel.setVisible(false);
+						tablePanel.setVisible(false);
+						userInfoPanel.setVisible(false);
+						rentOrReturnBookPanel.getLblRent().setText("return");
+						rentOrReturnBookPanel.getBtnSubmit().setText("return");
+					}
 				}
-			} else if ("hot book".equals(label)) {
-				createHotBookTable();
-			} else if ("other...".equals(label)) {
-				createBookTypeList();
-			} else if ("author".equals(label)){
-				authorPanel.setVisible(true);
-				bookDetailScrollPane.setVisible(false);
-				bookTypePanel.setVisible(false);
-				tablePanel.setVisible(false);
-				authorPanel.add(new AuthorPanel(), BorderLayout.CENTER);
-			} else if("swap user".equals(label)){
-				new LoginFrame().setVisible(true);
-				dispose();
-			}else if ("exit".equals(label)){
-				System.exit(NORMAL);
+			} catch (Exception ex) {
+				ex.printStackTrace();
 			}
+		}
+
+		private void createAuthorPanel() {
+			authorPanel.setVisible(true);
+			rentPanel.setVisible(false);
+			allUserPanel.setVisible(false);
+			bookDetailScrollPane.setVisible(false);
+			bookTypePanel.setVisible(false);
+			tablePanel.setVisible(false);
+			userInfoPanel.setVisible(false);
+			authorPanel.add(new AuthorPanel(), BorderLayout.CENTER);
+		}
+
+		private void createRentOrReturnPanel(String title, String[] buttonTexts) throws SQLException {
+			rentPanel.setVisible(true);
+			rentPanel.setOpaque(false);
+			authorPanel.setVisible(false);
+			allUserPanel.setVisible(false);
+			bookDetailScrollPane.setVisible(false);
+			bookTypePanel.setVisible(false);
+			tablePanel.setVisible(false);
+			userInfoPanel.setVisible(false);
+			rentOrReturnBookPanel = new RentBookPanel(title, buttonTexts);
+			rentPanel.add(rentOrReturnBookPanel, BorderLayout.CENTER);
+		}
+
+		private void createUserInfoPanel() {
+			userInfoPanel.setVisible(true);
+			rentPanel.setVisible(false);
+			allUserPanel.setVisible(false);
+			authorPanel.setVisible(false);
+			bookDetailScrollPane.setVisible(false);
+			bookTypePanel.setVisible(false);
+			tablePanel.setVisible(false);
+			userInfoPanel.add(new UserInfoPanel(), BorderLayout.CENTER);
 		}
 
 		private void createBookTypeList() {
 			bookTypePanel.removeAll();
 			bookTypePanel.setVisible(true);
+			rentPanel.setVisible(false);
+			allUserPanel.setVisible(false);
+			userInfoPanel.setVisible(false);
 			bookDetailScrollPane.setVisible(false);
 			authorPanel.setVisible(false);
 			tablePanel.setVisible(false);
@@ -258,14 +324,16 @@ public class IndexFrame extends JFrame {
 			bookTypeList.setModel(new AbstractListModel<String>() {
 				private static final long serialVersionUID = 1L;
 				String[] values = new String[] { "computer", "database" };
+
 				public int getSize() {
 					return values.length;
 				}
+
 				public String getElementAt(int index) {
 					return values[index];
 				}
 			});
-			bookTypeList.setBounds(0, 0, 151, 354);
+			bookTypeList.setBounds(0, 0, 163, 364);
 			bookTypePanel.add(bookTypeList, BorderLayout.CENTER);
 			contentPane.add(bookTypePanel);
 		}
@@ -273,10 +341,13 @@ public class IndexFrame extends JFrame {
 		private void createHotBookTable() {
 			tablePanel.removeAll();
 			tablePanel.setVisible(true);
+			rentPanel.setVisible(false);
+			allUserPanel.setVisible(false);
 			authorPanel.setVisible(false);
+			userInfoPanel.setVisible(false);
 			bookDetailScrollPane.setVisible(false);
 			bookTypePanel.setVisible(false);
-			String[] Names = { "bookname", "simpleInfo", "author", "acount" };
+			String[] Names = { "bookname", "simpleInfo", "author", "account" };
 			Object[][] playerInfo = { { "oracle", "good book", "xiaoming", 1 }, { "web", "good book", "xiaoming", 2 } };
 			JTable table = new JTable(playerInfo, Names);
 			table.setPreferredScrollableViewportSize(new Dimension(550, 30));
@@ -289,14 +360,16 @@ public class IndexFrame extends JFrame {
 			contentPane.add(tablePanel);
 		}
 
-		private void CreateNewBookTable() throws SQLException {
+		private void CreateNewBookTable(List<Book> books) throws SQLException {
 			tablePanel.setVisible(true);
+			allUserPanel.setVisible(false);
+			rentPanel.setVisible(false);
 			tablePanel.removeAll();
 			authorPanel.setVisible(false);
+			userInfoPanel.setVisible(false);
 			bookDetailScrollPane.setVisible(false);
 			bookTypePanel.setVisible(false);
 			String[] Names = { "bookname", "simpleInfo", "author", "account" };
-			List<Book> books = bookDao.selectListOrder(null, null, Names, new String[]{"publishTime"}, true);
 			Object[][] results = bookService.changeToArray(books, Names);
 			JTable table = new JTable(results, Names);
 			table.setPreferredScrollableViewportSize(new Dimension(550, 30));
@@ -310,5 +383,17 @@ public class IndexFrame extends JFrame {
 			contentPane.add(tablePanel);
 		}
 
+	}
+
+	public void createAllUserPanel() throws SQLException {
+		allUserPanel.setVisible(true);
+		allUserPanel.removeAll();
+		rentPanel.setVisible(false);
+		authorPanel.setVisible(false);
+		bookDetailScrollPane.setVisible(false);
+		bookTypePanel.setVisible(false);
+		tablePanel.setVisible(false);
+		userInfoPanel.setVisible(false);
+		allUserPanel.add(new AllUserPanel(), BorderLayout.CENTER);
 	}
 }

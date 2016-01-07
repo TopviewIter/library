@@ -6,6 +6,7 @@ import java.util.List;
 import org.junit.Test;
 
 import com.xluo.po.Book;
+import com.xluo.po.User;
 import com.xluo.util.UUIDUtil;
 
 public class BookDaoTest {
@@ -45,6 +46,18 @@ public class BookDaoTest {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testSelectScanBook() throws SQLException{
+		User user = new User();
+		user.setId("9bb64ac54e2345bc80ec3d8e680326ad");
+		List<Book> books = bookDao.selectScanBook(user);
+		if(books != null){
+			for(Book book : books){
+				System.out.println(book.getBookname());
+			}
 		}
 	}
 

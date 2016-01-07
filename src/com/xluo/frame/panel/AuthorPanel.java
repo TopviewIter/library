@@ -22,11 +22,11 @@ public class AuthorPanel extends JPanel {
 		lblSrc.setIcon(ImageUtil.loadImageIcon("/git.png"));
 		
 		JLabel lblName = new JLabel("AuthorName: xluo");
-		lblName.setBounds(232, 286, 96, 15);
+		lblName.setBounds(232, 286, 198, 15);
 		add(lblName);
 		
 		JLabel lblQQ = new JLabel("Author  QQ: 1040706472");
-		lblQQ.setBounds(232, 307, 132, 15);
+		lblQQ.setBounds(232, 307, 218, 15);
 		add(lblQQ);
 		
 		JLabel lblBlog = new JLabel("AuthorBlog: http://www.cnblogs.com/D-Key/");

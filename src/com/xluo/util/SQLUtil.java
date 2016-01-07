@@ -23,8 +23,12 @@ public class SQLUtil {
 	
 	public static String getSelectSql(String tableName, String[] paramNames, String[] resultNames) {
 		StringBuilder sb = new StringBuilder("select ");
-		for(String resultName : resultNames){
-			sb.append(resultName + ",");
+		if(resultNames == null){
+			sb.append("* ,");
+		}else{
+			for(String resultName : resultNames){
+				sb.append(resultName + ",");
+			}
 		}
 		sb = new StringBuilder(sb.substring(0, sb.toString().lastIndexOf(",")));
 		sb.append(" from " + tableName);

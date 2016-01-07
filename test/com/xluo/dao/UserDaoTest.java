@@ -1,6 +1,7 @@
 package com.xluo.dao;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -27,6 +28,20 @@ public class UserDaoTest {
 			User user = userDao.selectOne(new String[] { "password", "email" },
 					new Object[] { "xiaoming", "110@qq.com" }, new String[] { "username" });
 			System.out.println(user.getUsername());
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Test
+	public void testSelectList() {
+		try {
+			List<User> users = userDao.selectListOrder(null, null, null, new String[]{"username"}, false);
+			if(users != null && users.size() != 0){
+				for(User u : users){
+					System.out.println(u.getUsername());
+				}
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

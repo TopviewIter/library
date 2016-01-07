@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 import com.xluo.dao.UserDao;
@@ -38,7 +39,7 @@ public class LoginFrame extends JFrame {
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 
-		passwordText = new JTextField();
+		passwordText = new JPasswordField();
 		passwordText.setBounds(93, 119, 122, 21);
 		contentPane.add(passwordText);
 		passwordText.setColumns(10);
@@ -83,7 +84,7 @@ public class LoginFrame extends JFrame {
 					 User user = userDao.selectOne(
 					 new String[]{"email", "password"},
 					 new Object[]{email, password},
-					 new String[]{"username"});
+					 new String[]{"username", "id"});
 					if (user == null) {
 						new LoginFailFrame().setVisible(true);
 					} else {

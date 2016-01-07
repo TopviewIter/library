@@ -14,4 +14,5 @@ public class Constant {
 	public static final String ICON_ME = "/me.png";
 	public static final String SETTING = "/setting.png";
 	public static final String ABOUT = "/about.png";
+	public static final String LIBRARY_INDEX_LOGO = "library_index_logo.png";
 }

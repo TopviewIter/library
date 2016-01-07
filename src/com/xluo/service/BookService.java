@@ -1,7 +1,9 @@
 package com.xluo.service;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.xluo.po.Book;
 
@@ -27,6 +29,15 @@ public class BookService {
 	
 	private String createGetMethod(String attribute){
 		return "get" + attribute.substring(0, 1).toUpperCase() + attribute.substring(1); 
+	}
+
+	public Map<String, String> changeToMap(List<Book> books) {
+		Map<String, String> result = new LinkedHashMap<String, String>();
+		result.put("select-one", null);
+		for(Book book : books){
+			result.put(book.getBookname() + "-" + book.getAuthor(), book.getId());
+		}
+		return result;
 	}
 	
 }
